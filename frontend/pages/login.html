@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kirish — AptekFinder</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body>
+<header>
+  <a href="../index.html" class="logo"><div class="logo-icon">💊</div><h1>Aptek<span>Finder</span></h1></a>
+  <div class="nav-links" id="navAuth"></div>
+</header>
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h2>Xush kelibsiz</h2>
+    <p class="sub">Akkauntingizga kiring</p>
+    <div class="form-group"><label>Email</label><input type="email" id="email" placeholder="siz@email.uz"/></div>
+    <div class="form-group"><label>Parol</label><input type="password" id="password" placeholder="Parolingiz"/></div>
+    <button class="btn btn-primary btn-full" id="loginBtn" onclick="doLogin()">Kirish</button>
+    <div id="msg"></div>
+    <p style="margin-top:20px;font-size:.83rem;color:var(--muted);text-align:center;">
+      Akkaunt yo'qmi? <a href="register.html">Ro'yxatdan o'ting</a>
+    </p>
+  </div>
+</div>
+<script src="../js/api.js"></script>
+<script>
+renderNav();
+if (getUser()) window.location.href = '../index.html';
+
+async function doLogin() {
+  const btn = document.getElementById('loginBtn');
+  const msg = document.getElementById('msg');
+  btn.disabled = true; btn.textContent = 'Kirilmoqda…';
+  msg.className = ''; msg.textContent = '';
+  try {
+    const data = await apiFetch('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({
+        email:    document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value
+      })
+    });
+    saveAuth(data.token, data.user);
+    window.location.href = data.user.role === 'admin' ? 'admin/dashboard.html' : '../index.html';
+  } catch(e) {
+    msg.className = 'msg error'; msg.textContent = e.message;
+    btn.disabled = false; btn.textContent = 'Kirish';
+  }
+}
+document.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+</script>
+</body>
+</html>

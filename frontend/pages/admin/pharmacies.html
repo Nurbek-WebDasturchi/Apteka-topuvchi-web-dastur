@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dorixonalar — Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../../css/style.css"/>
+</head>
+<body>
+<header>
+  <a href="../../index.html" class="logo"><div class="logo-icon">💊</div><h1>Aptek<span>Finder</span></h1></a>
+  <div class="nav-links"><span style="font-size:.82rem;color:var(--accent);font-weight:600;">⚙️ Admin Panel</span><div id="navAuth"></div></div>
+</header>
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <a href="dashboard.html">📊 Dashboard</a>
+    <a href="pharmacies.html" class="active">🏥 Dorixonalar</a>
+    <a href="orders.html">📦 Buyurtmalar</a>
+    <a href="../../index.html">🗺️ Saytga qaytish</a>
+  </aside>
+  <main class="admin-content">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+      <div>
+        <h1 style="font-family:var(--font-display);font-size:1.8rem;">Dorixonalar</h1>
+        <p style="color:var(--muted);">Barchasi boshqaruv</p>
+      </div>
+      <button class="btn btn-primary" onclick="toggleForm()">+ Yangi dorixona</button>
+    </div>
+
+    <!-- ADD FORM -->
+    <div id="addForm" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:24px;">
+      <h3 style="font-family:var(--font-display);margin-bottom:16px;">Yangi dorixona qo'shish</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="form-group"><label>Nomi *</label><input id="fName" placeholder="Dorixona nomi"/></div>
+        <div class="form-group"><label>Manzil</label><input id="fAddr" placeholder="Ko'cha, uy"/></div>
+        <div class="form-group"><label>Kenglik (lat) *</label><input id="fLat" placeholder="41.2995" type="number" step="any"/></div>
+        <div class="form-group"><label>Uzunlik (lng) *</label><input id="fLng" placeholder="69.2401" type="number" step="any"/></div>
+        <div class="form-group"><label>Telefon</label><input id="fPhone" placeholder="+998901234567"/></div>
+        <div class="form-group"><label>Ish vaqti</label><input id="fHours" placeholder="08:00-22:00"/></div>
+      </div>
+      <div id="formMsg"></div>
+      <div style="display:flex;gap:10px;margin-top:4px;">
+        <button class="btn btn-primary" onclick="addPharmacy()">Saqlash</button>
+        <button class="btn btn-ghost"   onclick="toggleForm()">Bekor qilish</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Nomi</th><th>Manzil</th><th>Telefon</th><th>Ish vaqti</th><th>Holat</th><th>Amal</th></tr></thead>
+        <tbody id="pharmaBody"><tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted);">Yuklanmoqda…</td></tr></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+<script src="../../js/api.js"></script>
+<script>
+renderNav();
+if (!getUser() || getUser().role!=='admin') window.location.href='../login.html';
+
+function toggleForm() {
+  const f = document.getElementById('addForm');
+  f.style.display = f.style.display==='none' ? 'block' : 'none';
+}
+
+async function load() {
+  const tbody = document.getElementById('pharmaBody');
+  try {
+    const list = await apiFetch('/pharmacies');
+    if (!list.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted);">Dorixonalar yo\'q</td></tr>'; return; }
+    tbody.innerHTML = list.map(p => `
+      <tr>
+        <td style="color:var(--muted)">${p.id}</td>
+        <td style="font-weight:600">${p.name}</td>
+        <td style="color:var(--muted);font-size:.82rem">${p.address||'—'}</td>
+        <td>${p.phone||'—'}</td>
+        <td style="font-size:.8rem;color:var(--muted)">${p.working_hours||'—'}</td>
+        <td><span class="badge ${p.is_active?'badge-green':'badge-red'}">${p.is_active?'Faol':'Yopilgan'}</span></td>
+        <td>
+          <button class="btn btn-danger" style="padding:6px 14px;font-size:.78rem;" onclick="deactivate(${p.id},'${p.name}')">O'chirish</button>
+        </td>
+      </tr>`).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="7" style="color:var(--red);padding:20px;">${e.message}</td></tr>`;
+  }
+}
+load();
+
+async function addPharmacy() {
+  const msg = document.getElementById('formMsg');
+  msg.textContent=''; msg.className='';
+  try {
+    await apiFetch('/pharmacies', { method:'POST', body: JSON.stringify({
+      name:          document.getElementById('fName').value.trim(),
+      address:       document.getElementById('fAddr').value.trim(),
+      lat:           parseFloat(document.getElementById('fLat').value),
+      lng:           parseFloat(document.getElementById('fLng').value),
+      phone:         document.getElementById('fPhone').value.trim(),
+      working_hours: document.getElementById('fHours').value.trim()
+    })});
+    msg.className='msg success'; msg.textContent="✅ Qo'shildi!";
+    setTimeout(() => { toggleForm(); load(); }, 1000);
+  } catch(e) { msg.className='msg error'; msg.textContent=e.message; }
+}
+
+async function deactivate(id, name) {
+  if (!confirm(`"${name}" ni o'chirmoqchimisiz?`)) return;
+  await apiFetch('/pharmacies/'+id, { method:'DELETE' });
+  load();
+}
+</script>
+</body>
+</html>

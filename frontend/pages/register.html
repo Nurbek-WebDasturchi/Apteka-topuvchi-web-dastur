@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ro'yxat — AptekFinder</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body>
+<header>
+  <a href="../index.html" class="logo"><div class="logo-icon">💊</div><h1>Aptek<span>Finder</span></h1></a>
+  <div class="nav-links" id="navAuth"></div>
+</header>
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h2>Ro'yxatdan o'ting</h2>
+    <p class="sub">Yangi akkaunt yarating</p>
+    <div class="form-group"><label>Ism</label><input type="text" id="name" placeholder="Ismingiz"/></div>
+    <div class="form-group"><label>Email</label><input type="email" id="email" placeholder="siz@email.uz"/></div>
+    <div class="form-group"><label>Parol</label><input type="password" id="password" placeholder="Kamida 6 ta belgi"/></div>
+    <button class="btn btn-primary btn-full" id="regBtn" onclick="doRegister()">Ro'yxatdan o'tish</button>
+    <div id="msg"></div>
+    <p style="margin-top:20px;font-size:.83rem;color:var(--muted);text-align:center;">
+      Akkaunt bormi? <a href="login.html">Kiring</a>
+    </p>
+  </div>
+</div>
+<script src="../js/api.js"></script>
+<script>
+renderNav();
+async function doRegister() {
+  const btn = document.getElementById('regBtn');
+  const msg = document.getElementById('msg');
+  btn.disabled = true; btn.textContent = 'Saqlanmoqda…';
+  msg.className = ''; msg.textContent = '';
+  try {
+    const data = await apiFetch('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({
+        name:     document.getElementById('name').value.trim(),
+        email:    document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value
+      })
+    });
+    saveAuth(data.token, data.user);
+    window.location.href = '../index.html';
+  } catch(e) {
+    msg.className = 'msg error'; msg.textContent = e.message;
+    btn.disabled = false; btn.textContent = "Ro'yxatdan o'tish";
+  }
+}
+</script>
+</body>
+</html>

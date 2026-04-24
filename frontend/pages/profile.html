@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Profil — AptekFinder</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body>
+<header>
+  <a href="../index.html" class="logo"><div class="logo-icon">💊</div><h1>Aptek<span>Finder</span></h1></a>
+  <div class="nav-links">
+    <a href="../index.html" class="nav-link">🗺️ Xarita</a>
+    <a href="search.html" class="nav-link">🔍 Dori qidirish</a>
+    <div id="navAuth"></div>
+  </div>
+</header>
+<div class="page">
+  <h1 class="page-title">Mening profilim</h1>
+  <p class="page-sub" id="userInfo">Yuklanmoqda…</p>
+  <h2 style="font-family:var(--font-display);font-size:1.3rem;margin-bottom:16px;">Buyurtmalarim</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Dori</th><th>Dorixona</th><th>Miqdor</th><th>Jami narx</th><th>Holat</th><th>Sana</th></tr></thead>
+      <tbody id="ordersBody"><tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted);">Yuklanmoqda…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+<script src="../js/api.js"></script>
+<script>
+renderNav();
+const user = getUser();
+if (!user) window.location.href = 'login.html';
+
+document.getElementById('userInfo').textContent = `${user.name} · ${user.email}`;
+
+const statusMap = { pending:'⏳ Kutilmoqda', confirmed:'✅ Tasdiqlangan', ready:'📦 Tayyor', cancelled:'❌ Bekor' };
+const statusClass = { pending:'badge-yellow', confirmed:'badge-blue', ready:'badge-green', cancelled:'badge-red' };
+
+(async () => {
+  const tbody = document.getElementById('ordersBody');
+  try {
+    const orders = await apiFetch('/orders/my');
+    if (!orders.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted);">Buyurtmalar yo\'q</td></tr>';
+      return;
+    }
+    tbody.innerHTML = orders.map(o => `
+      <tr>
+        <td style="color:var(--muted)">#${o.id}</td>
+        <td>${o.medicine_name}</td>
+        <td>${o.pharmacy_name}</td>
+        <td>${o.quantity}</td>
+        <td class="price" style="font-size:.9rem">${Number(o.total_price).toLocaleString()} so'm</td>
+        <td><span class="badge ${statusClass[o.status]||'badge-blue'}">${statusMap[o.status]||o.status}</span></td>
+        <td style="color:var(--muted);font-size:.78rem;">${new Date(o.created_at).toLocaleDateString('uz-UZ')}</td>
+      </tr>`).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="7" style="color:var(--red);padding:20px;">${e.message}</td></tr>`;
+  }
+})();
+</script>
+</body>
+</html>

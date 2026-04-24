@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Buyurtmalar — Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../../css/style.css"/>
+</head>
+<body>
+<header>
+  <a href="../../index.html" class="logo"><div class="logo-icon">💊</div><h1>Aptek<span>Finder</span></h1></a>
+  <div class="nav-links"><span style="font-size:.82rem;color:var(--accent);font-weight:600;">⚙️ Admin Panel</span><div id="navAuth"></div></div>
+</header>
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <a href="dashboard.html">📊 Dashboard</a>
+    <a href="pharmacies.html">🏥 Dorixonalar</a>
+    <a href="orders.html" class="active">📦 Buyurtmalar</a>
+    <a href="../../index.html">🗺️ Saytga qaytish</a>
+  </aside>
+  <main class="admin-content">
+    <h1 style="font-family:var(--font-display);font-size:1.8rem;margin-bottom:6px;">Buyurtmalar</h1>
+    <p style="color:var(--muted);margin-bottom:24px;">Barcha buyurtmalarni boshqarish</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Foydalanuvchi</th><th>Dori</th><th>Dorixona</th><th>Miqdor</th><th>Narx</th><th>Holat</th><th>Sana</th></tr></thead>
+        <tbody id="ordersBody"><tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted);">Yuklanmoqda…</td></tr></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+<script src="../../js/api.js"></script>
+<script>
+renderNav();
+if (!getUser() || getUser().role!=='admin') window.location.href='../login.html';
+
+const statusClass = { pending:'badge-yellow', confirmed:'badge-blue', ready:'badge-green', cancelled:'badge-red' };
+const statusLabel = { pending:'Kutilmoqda', confirmed:'Tasdiqlangan', ready:'Tayyor', cancelled:'Bekor' };
+
+(async () => {
+  const tbody = document.getElementById('ordersBody');
+  try {
+    const orders = await apiFetch('/orders');
+    if (!orders.length) { tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted);">Buyurtmalar yo\'q</td></tr>'; return; }
+    tbody.innerHTML = orders.map(o => `
+      <tr>
+        <td style="color:var(--muted)">#${o.id}</td>
+        <td>${o.user_name||'—'}<br><span style="font-size:.75rem;color:var(--muted)">${o.email||''}</span></td>
+        <td>${o.medicine_name||'—'}</td>
+        <td>${o.pharmacy_name||'—'}</td>
+        <td>${o.quantity}</td>
+        <td class="price" style="font-size:.85rem">${Number(o.total_price||0).toLocaleString()} so'm</td>
+        <td>
+          <select onchange="changeStatus(${o.id},this.value)" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-size:.8rem;">
+            ${['pending','confirmed','ready','cancelled'].map(s =>
+              `<option value="${s}" ${o.status===s?'selected':''}>${statusLabel[s]}</option>`
+            ).join('')}
+          </select>
+        </td>
+        <td style="color:var(--muted);font-size:.78rem;">${new Date(o.created_at).toLocaleDateString('uz-UZ')}</td>
+      </tr>`).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="8" style="color:var(--red);padding:20px;">${e.message}</td></tr>`;
+  }
+})();
+
+async function changeStatus(id, status) {
+  try {
+    await apiFetch('/orders/'+id+'/status', { method:'PUT', body: JSON.stringify({ status }) });
+  } catch(e) { alert('Xatolik: ' + e.message); }
+}
+</script>
+</body>
+</html>

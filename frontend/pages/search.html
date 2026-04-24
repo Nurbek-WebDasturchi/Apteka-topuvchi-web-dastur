@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dori qidirish — AptekFinder</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body>
+<header>
+  <a href="../index.html" class="logo"><div class="logo-icon">💊</div><h1>Aptek<span>Finder</span></h1></a>
+  <div class="nav-links">
+    <a href="../index.html" class="nav-link">🗺️ Xarita</a>
+    <a href="search.html" class="nav-link active">🔍 Dori qidirish</a>
+    <div id="navAuth"></div>
+  </div>
+</header>
+
+<div class="page">
+  <h1 class="page-title">Dori qidirish</h1>
+  <p class="page-sub">Dorixonalardagi mavjud dorilarni qidiring va buyurtma bering</p>
+
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="Dori nomini kiriting… (masalan: Paracetamol)"/>
+    <button class="btn btn-primary" onclick="search()">🔍 Qidirish</button>
+  </div>
+
+  <div id="results">
+    <div class="loading-center" style="padding:40px;color:var(--muted);">
+      <div>Qidirish uchun dori nomini kiriting</div>
+    </div>
+  </div>
+</div>
+
+<!-- ORDER MODAL -->
+<div id="orderModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:none;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:32px;max-width:420px;width:90%;">
+    <h3 style="font-family:var(--font-display);font-size:1.4rem;margin-bottom:6px;" id="modalTitle">Buyurtma</h3>
+    <p style="font-size:.83rem;color:var(--muted);margin-bottom:20px;" id="modalSub"></p>
+    <div class="form-group"><label>Miqdor</label><input type="number" id="qty" value="1" min="1" max="99"/></div>
+    <div class="form-group"><label>Izoh (ixtiyoriy)</label><textarea id="note" placeholder="Qo'shimcha izoh…"></textarea></div>
+    <div id="modalMsg"></div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-primary" onclick="submitOrder()">✅ Buyurtma berish</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Bekor qilish</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script>
+renderNav();
+let currentMed = null;
+
+// URL parametrdan pharmacy filter
+const params = new URLSearchParams(window.location.search);
+if (params.get('pharmacy')) search('', params.get('pharmacy'));
+
+document.getElementById('searchInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') search();
+});
+
+async function search(q, pharmacyId) {
+  const term = q ?? document.getElementById('searchInput').value.trim();
+  const div = document.getElementById('results');
+  div.innerHTML = '<div class="loading-center"><div class="spin"></div><span>Qidirilmoqda…</span></div>';
+  try {
+    let url = '/medicines?';
+    if (term)       url += 'search=' + encodeURIComponent(term) + '&';
+    if (pharmacyId) url += 'pharmacy_id=' + pharmacyId + '&';
+    url += 'in_stock=true';
+    const items = await apiFetch(url);
+    if (!items.length) {
+      div.innerHTML = '<div class="loading-center">Hech narsa topilmadi 😔</div>'; return;
+    }
+    div.innerHTML = '<div class="cards-grid"></div>';
+    const grid = div.querySelector('.cards-grid');
+    items.forEach(m => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <div class="card-title">${m.name}</div>
+          <span class="badge ${m.in_stock?'badge-green':'badge-red'}">${m.in_stock?'Mavjud':'Tugagan'}</span>
+        </div>
+        <div class="card-sub">${m.description||'Tavsif yo\'q'}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;">
+          <div class="price">${Number(m.price).toLocaleString()} so'm</div>
+          <span style="font-size:.78rem;color:var(--muted);">🏪 ${m.pharmacy_name}</span>
+        </div>
+        ${m.in_stock ? `<button class="btn btn-primary btn-full" style="margin-top:12px;" onclick='openOrder(${JSON.stringify(m)})'>Buyurtma berish</button>` : ''}
+      `;
+      grid.appendChild(card);
+    });
+  } catch(e) {
+    div.innerHTML = `<div class="loading-center" style="color:var(--red);">Xatolik: ${e.message}</div>`;
+  }
+}
+
+function openOrder(med) {
+  if (!getUser()) { window.location.href = 'login.html'; return; }
+  currentMed = med;
+  document.getElementById('modalTitle').textContent = med.name;
+  document.getElementById('modalSub').textContent   = `${med.pharmacy_name} · ${Number(med.price).toLocaleString()} so'm`;
+  document.getElementById('modalMsg').textContent   = '';
+  document.getElementById('orderModal').style.display = 'flex';
+}
+function closeModal() { document.getElementById('orderModal').style.display = 'none'; }
+
+async function submitOrder() {
+  const qty  = parseInt(document.getElementById('qty').value);
+  const note = document.getElementById('note').value;
+  const msg  = document.getElementById('modalMsg');
+  try {
+    await apiFetch('/orders', {
+      method: 'POST',
+      body: JSON.stringify({ medicine_id: currentMed.id, pharmacy_id: currentMed.pharmacy_id, quantity: qty, note })
+    });
+    msg.className = 'msg success'; msg.textContent = "✅ Buyurtma muvaffaqiyatli berildi!";
+    setTimeout(closeModal, 1500);
+  } catch(e) {
+    msg.className = 'msg error'; msg.textContent = e.message;
+  }
+}
+</script>
+</body>
+</html>

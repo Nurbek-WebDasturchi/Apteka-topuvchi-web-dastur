@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel — AptekFinder</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../../css/style.css"/>
+</head>
+<body>
+<header>
+  <a href="../../index.html" class="logo"><div class="logo-icon">💊</div><h1>Aptek<span>Finder</span></h1></a>
+  <div class="nav-links"><span style="font-size:.82rem;color:var(--accent);font-weight:600;">⚙️ Admin Panel</span><div id="navAuth"></div></div>
+</header>
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <a href="dashboard.html"  class="active">📊 Dashboard</a>
+    <a href="pharmacies.html"           >🏥 Dorixonalar</a>
+    <a href="orders.html"              >📦 Buyurtmalar</a>
+    <a href="../../index.html"         >🗺️ Saytga qaytish</a>
+  </aside>
+  <main class="admin-content">
+    <h1 style="font-family:var(--font-display);font-size:1.8rem;margin-bottom:6px;">Dashboard</h1>
+    <p style="color:var(--muted);margin-bottom:28px;">Tizim umumiy ko'rinishi</p>
+    <div class="stat-cards" id="statCards">
+      <div class="loading-center" style="grid-column:1/-1;"><div class="spin"></div></div>
+    </div>
+    <h2 style="font-family:var(--font-display);font-size:1.2rem;margin-bottom:16px;">So'nggi buyurtmalar</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Foydalanuvchi</th><th>Dori</th><th>Dorixona</th><th>Narx</th><th>Holat</th><th>Sana</th></tr></thead>
+        <tbody id="recentOrders"><tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted);">Yuklanmoqda…</td></tr></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+<script src="../../js/api.js"></script>
+<script>
+renderNav();
+const user = getUser();
+if (!user || user.role !== 'admin') window.location.href = '../login.html';
+
+const statusClass = { pending:'badge-yellow', confirmed:'badge-blue', ready:'badge-green', cancelled:'badge-red' };
+const statusLabel = { pending:'Kutilmoqda', confirmed:'Tasdiqlangan', ready:'Tayyor', cancelled:'Bekor' };
+
+(async () => {
+  try {
+    const [stats, orders] = await Promise.all([
+      apiFetch('/admin/stats'),
+      apiFetch('/orders')
+    ]);
+    document.getElementById('statCards').innerHTML = `
+      <div class="stat-card"><div class="label">👥 Foydalanuvchilar</div><div class="value blue">${stats.total_users}</div></div>
+      <div class="stat-card"><div class="label">🏥 Dorixonalar</div><div class="value green">${stats.total_pharmacies}</div></div>
+      <div class="stat-card"><div class="label">💊 Dorilar</div><div class="value blue">${stats.total_medicines}</div></div>
+      <div class="stat-card"><div class="label">📦 Buyurtmalar</div><div class="value">${stats.total_orders}</div></div>
+      <div class="stat-card"><div class="label">⏳ Kutilayotgan</div><div class="value yellow">${stats.pending_orders}</div></div>
+      <div class="stat-card"><div class="label">💰 Tushum</div><div class="value green">${Number(stats.total_revenue).toLocaleString()} so'm</div></div>
+    `;
+    const tbody = document.getElementById('recentOrders');
+    if (!orders.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--muted);">Buyurtmalar yo\'q</td></tr>'; return; }
+    tbody.innerHTML = orders.slice(0,10).map(o => `
+      <tr>
+        <td style="color:var(--muted)">#${o.id}</td>
+        <td>${o.user_name||'—'}</td>
+        <td>${o.medicine_name||'—'}</td>
+        <td>${o.pharmacy_name||'—'}</td>
+        <td class="price" style="font-size:.85rem">${Number(o.total_price||0).toLocaleString()} so'm</td>
+        <td><span class="badge ${statusClass[o.status]||'badge-blue'}">${statusLabel[o.status]||o.status}</span></td>
+        <td style="color:var(--muted);font-size:.78rem;">${new Date(o.created_at).toLocaleDateString('uz-UZ')}</td>
+      </tr>`).join('');
+  } catch(e) {
+    document.getElementById('statCards').innerHTML = `<div style="color:var(--red);">Xatolik: ${e.message}</div>`;
+  }
+})();
+</script>
+</body>
+</html>

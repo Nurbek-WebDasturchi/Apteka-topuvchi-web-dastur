@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AptekFinder — Yaqin dorixonalar</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap"
+      rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      body {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        height: 100dvh;
+        overflow: hidden;
+      }
+      .app-body {
+        display: grid;
+        grid-template-columns: 340px 1fr;
+        overflow: hidden;
+      }
+      @media (max-width: 700px) {
+        .app-body {
+          grid-template-columns: 1fr;
+          grid-template-rows: 1fr 1fr;
+        }
+      }
+      #sidebar {
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+      .sidebar-header {
+        padding: 18px 20px 14px;
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        background: var(--surface);
+        z-index: 10;
+      }
+      .sidebar-header h2 {
+        font-family: var(--font-display);
+        font-size: 1.05rem;
+        font-weight: 400;
+      }
+      .sidebar-header p {
+        font-size: 0.78rem;
+        color: var(--muted);
+        margin-top: 3px;
+      }
+      #pharmacyList {
+        list-style: none;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .pharmacy-card {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 14px 16px;
+        cursor: pointer;
+        transition:
+          border-color 0.2s,
+          background 0.2s;
+        position: relative;
+      }
+      .pharmacy-card:hover,
+      .pharmacy-card.active {
+        border-color: var(--accent);
+        background: #161f1a;
+      }
+      .pharmacy-card .card-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 5px;
+        padding-right: 40px;
+      }
+      .pharmacy-card .card-addr {
+        font-size: 0.78rem;
+        color: var(--muted);
+      }
+      .card-distance {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--accent);
+        background: rgba(63, 185, 80, 0.12);
+        padding: 3px 8px;
+        border-radius: 999px;
+      }
+      .card-meta {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+        flex-wrap: wrap;
+      }
+      .tag {
+        font-size: 0.7rem;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--muted);
+      }
+      .state-box {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 32px 24px;
+        gap: 12px;
+      }
+      .state-icon {
+        font-size: 2.5rem;
+      }
+      .state-box p {
+        font-size: 0.85rem;
+        color: var(--muted);
+        max-width: 240px;
+        line-height: 1.5;
+      }
+      #map {
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+      }
+      .leaflet-popup-content-wrapper {
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--radius) !important;
+        color: var(--text) !important;
+        min-width: 200px;
+      }
+      .leaflet-popup-tip {
+        background: var(--surface) !important;
+      }
+      .popup-name {
+        font-family: var(--font-display);
+        font-size: 1rem;
+        margin-bottom: 6px;
+      }
+      .popup-detail {
+        font-size: 0.8rem;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      .popup-dist {
+        margin-top: 8px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .popup-order-btn {
+        display: block;
+        margin-top: 10px;
+        padding: 7px 14px;
+        background: var(--accent);
+        color: #0d1117;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.8rem;
+        cursor: pointer;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a href="index.html" class="logo">
+        <div class="logo-icon">💊</div>
+        <h1>Aptek<span>Finder</span></h1>
+      </a>
+      <div class="nav-links">
+        <a href="pages/search.html" class="nav-link">🔍 Dori qidirish</a>
+        <div id="navAuth"></div>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center">
+        <div class="status-pill" id="statusPill">
+          <span class="dot"></span
+          ><span id="statusText">Joylashuv kutilmoqda…</span>
+        </div>
+        <button
+          id="refreshBtn"
+          class="btn btn-ghost"
+          disabled
+          style="padding: 8px 16px; font-size: 0.83rem">
+          🔄 Yangilash
+        </button>
+      </div>
+    </header>
+
+    <div class="app-body">
+      <aside id="sidebar">
+        <div class="sidebar-header">
+          <h2>Yaqin dorixonalar</h2>
+          <p id="countLabel">Qidirilmoqda…</p>
+        </div>
+        <ul id="pharmacyList">
+          <li class="state-box" id="sidebarState">
+            <div class="state-icon">📍</div>
+            <p>Joylashuvingiz aniqlanmoqda…</p>
+          </li>
+        </ul>
+      </aside>
+      <div id="map"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+      const API_BASE = "http://localhost:5000/api";
+      const SEARCH_RADIUS = 5000;
+      let map, userMarker, userCoords;
+      let pharmacyMarkers = [],
+        activeCard = null;
+
+      const statusPill = document.getElementById("statusPill");
+      const statusText = document.getElementById("statusText");
+      const refreshBtn = document.getElementById("refreshBtn");
+      const pharmacyList = document.getElementById("pharmacyList");
+      const countLabel = document.getElementById("countLabel");
+
+      function setStatus(msg, state = "") {
+        statusText.textContent = msg;
+        statusPill.className = "status-pill" + (state ? " " + state : "");
+      }
+      function showState(icon, msg, spin = false) {
+        pharmacyList.innerHTML = `<li class="state-box">
+    ${spin ? '<div class="spin"></div>' : `<div class="state-icon">${icon}</div>`}
+    <p>${msg}</p></li>`;
+      }
+      function initMap(lat, lng) {
+        if (map) {
+          map.setView([lat, lng], 15);
+          return;
+        }
+        map = L.map("map", { zoomControl: false }).setView([lat, lng], 15);
+        L.tileLayer(
+          "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+          { maxZoom: 19 },
+        ).addTo(map);
+        L.control.zoom({ position: "bottomright" }).addTo(map);
+      }
+      function makeUserIcon() {
+        return L.divIcon({
+          html: `<div style="width:18px;height:18px;background:#58a6ff;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 6px rgba(88,166,255,.25)"></div>`,
+          iconSize: [18, 18],
+          iconAnchor: [9, 9],
+          className: "",
+        });
+      }
+      function makePharmacyIcon(active = false) {
+        const c = active ? "#3fb950" : "#f85149";
+        return L.divIcon({
+          html: `<div style="width:28px;height:28px;background:${c};border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 3px 8px rgba(0,0,0,.5)"><span style="display:block;transform:rotate(45deg);text-align:center;line-height:24px;font-size:12px">💊</span></div>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 28],
+          popupAnchor: [0, -30],
+          className: "",
+        });
+      }
+      function haversine(lat1, lon1, lat2, lon2) {
+        const R = 6371000,
+          p1 = (lat1 * Math.PI) / 180,
+          p2 = (lat2 * Math.PI) / 180;
+        const dp = ((lat2 - lat1) * Math.PI) / 180,
+          dl = ((lon2 - lon1) * Math.PI) / 180;
+        const a =
+          Math.sin(dp / 2) ** 2 +
+          Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      }
+      function fmtDist(m) {
+        return m < 1000 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(1)} km`;
+      }
+      function esc(s) {
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      async function fetchPharmacies(lat, lng) {
+        countLabel.textContent = "Qidirilmoqda…";
+        showState("⏳", "Serverdan dorixonalar yuklanmoqda…", true);
+        pharmacyMarkers.forEach((m) => map.removeLayer(m));
+        pharmacyMarkers = [];
+        activeCard = null;
+
+        try {
+          // O'z API — Overpass emas!
+          const res = await fetch(
+            `${API_BASE}/pharmacies?lat=${lat}&lng=${lng}&radius=${SEARCH_RADIUS}`,
+          );
+          const pharmacies = await res.json();
+          renderPharmacies(pharmacies);
+          refreshBtn.disabled = false;
+        } catch (e) {
+          countLabel.textContent = "Xatolik";
+          showState(
+            "⚠️",
+            `Server bilan bog'lanib bo'lmadi. Serveringiz ishlamoqdami?`,
+          );
+          refreshBtn.disabled = false;
+        }
+      }
+
+      function renderPharmacies(items) {
+        pharmacyList.innerHTML = "";
+        if (!items.length) {
+          countLabel.textContent = "Dorixona topilmadi";
+          showState(
+            "🏥",
+            "Yaqin atrofda dorixona topilmadi. Radiusni kengaytiring.",
+          );
+          return;
+        }
+        const sorted = items
+          .map((p) => ({
+            ...p,
+            _dist: haversine(userCoords.lat, userCoords.lng, p.lat, p.lng),
+          }))
+          .sort((a, b) => a._dist - b._dist);
+        countLabel.textContent = `${sorted.length} ta dorixona topildi`;
+
+        sorted.forEach((p, idx) => {
+          const dist = fmtDist(p.distance_m || p._dist);
+          const li = document.createElement("li");
+          li.className = "pharmacy-card";
+          li.innerHTML = `
+      <span class="card-distance">${dist}</span>
+      <div class="card-name">${esc(p.name)}</div>
+      ${p.address ? `<div class="card-addr">${esc(p.address)}</div>` : ""}
+      <div class="card-meta">
+        ${p.phone ? `<span class="tag">📞 ${esc(p.phone)}</span>` : ""}
+        ${p.working_hours ? `<span class="tag">🕐 ${esc(p.working_hours)}</span>` : ""}
+      </div>`;
+          const marker = L.marker([+p.lat, +p.lng], {
+            icon: makePharmacyIcon(),
+          }).addTo(map);
+          marker.bindPopup(`
+      <div class="popup-name">${esc(p.name)}</div>
+      ${p.address ? `<div class="popup-detail">📍 ${esc(p.address)}</div>` : ""}
+      ${p.phone ? `<div class="popup-detail">📞 ${esc(p.phone)}</div>` : ""}
+      ${p.working_hours ? `<div class="popup-detail">🕐 ${esc(p.working_hours)}</div>` : ""}
+      <div class="popup-dist">${dist} uzoqlikda</div>
+      <button class="popup-order-btn" onclick="window.location.href='pages/search.html?pharmacy=${p.id}'">Dori buyurtma qilish</button>
+    `);
+          marker.on("click", () => activate(li, marker, idx));
+          li.addEventListener("click", () => {
+            map.setView([+p.lat, +p.lng], 17, { animate: true });
+            marker.openPopup();
+            activate(li, marker, idx);
+          });
+          pharmacyMarkers.push(marker);
+          pharmacyList.appendChild(li);
+        });
+      }
+      function activate(li, marker, idx) {
+        if (activeCard) activeCard.classList.remove("active");
+        activeCard = li;
+        li.classList.add("active");
+        li.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        pharmacyMarkers.forEach((m, i) =>
+          m.setIcon(makePharmacyIcon(i === idx)),
+        );
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          setStatus("Joy topildi", "located");
+          initMap(userCoords.lat, userCoords.lng);
+          userMarker = L.marker([userCoords.lat, userCoords.lng], {
+            icon: makeUserIcon(),
+            zIndexOffset: 1000,
+          })
+            .addTo(map)
+            .bindPopup('<div class="popup-name">📍 Siz shu yerdasiz</div>');
+          fetchPharmacies(userCoords.lat, userCoords.lng);
+        },
+        (err) => {
+          setStatus("Joylashuv xatosi", "error");
+          showState("❌", `Joylashuv ruxsati berilmadi. Yangilab ko'ring.`);
+          refreshBtn.disabled = false;
+        },
+        { enableHighAccuracy: true, timeout: 12000 },
+      );
+
+      refreshBtn.addEventListener("click", () => {
+        if (userCoords) fetchPharmacies(userCoords.lat, userCoords.lng);
+      });
+      renderNav();
+    </script>
+  </body>
+</html>
