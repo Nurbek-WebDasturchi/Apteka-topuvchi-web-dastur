@@ -79,6 +79,7 @@ nano .env
 ```
 
 `.env` fayl tarkibi:
+
 ```
 DB_HOST=localhost
 DB_PORT=5432
@@ -86,7 +87,7 @@ DB_NAME=aptek_db
 DB_USER=postgres
 DB_PASSWORD=SIZNING_PAROLINGIZ
 JWT_SECRET=uzun_maxfiy_kalit_bu_yerda
-PORT=5000
+1=5000
 ```
 
 ### 4. Serverni ishga tushirish
@@ -112,6 +113,7 @@ python3 -m http.server 3000
 ## Sinash
 
 ### Admin kirish:
+
 - Email: `admin@aptek.uz`
 - Parol: `password`
 
@@ -137,21 +139,21 @@ curl -X POST http://localhost:5000/api/auth/register \
 
 ## API Endpointlar
 
-| Method | URL | Tavsif | Auth |
-|--------|-----|--------|------|
-| POST | /api/auth/register | Ro'yxatdan o'tish | Yo'q |
-| POST | /api/auth/login | Kirish | Yo'q |
-| GET  | /api/auth/me | Profil | Token |
-| GET  | /api/pharmacies | Barcha dorixonalar | Yo'q |
-| GET  | /api/pharmacies?lat=&lng= | Yaqin dorixonalar | Yo'q |
-| POST | /api/pharmacies | Dorixona qo'shish | Admin |
-| PUT  | /api/pharmacies/:id | Tahrirlash | Admin |
-| DELETE | /api/pharmacies/:id | O'chirish | Admin |
-| GET  | /api/medicines | Barcha dorilar | Yo'q |
-| GET  | /api/medicines?search= | Qidirish | Yo'q |
-| POST | /api/medicines | Dori qo'shish | Admin |
-| POST | /api/orders | Buyurtma berish | Token |
-| GET  | /api/orders/my | Mening buyurtmalarim | Token |
-| GET  | /api/orders | Barcha buyurtmalar | Admin |
-| PUT  | /api/orders/:id/status | Status yangilash | Admin |
-| GET  | /api/admin/stats | Statistika | Admin |
+| Method | URL                       | Tavsif               | Auth  |
+| ------ | ------------------------- | -------------------- | ----- |
+| POST   | /api/auth/register        | Ro'yxatdan o'tish    | Yo'q  |
+| POST   | /api/auth/login           | Kirish               | Yo'q  |
+| GET    | /api/auth/me              | Profil               | Token |
+| GET    | /api/pharmacies           | Barcha dorixonalar   | Yo'q  |
+| GET    | /api/pharmacies?lat=&lng= | Yaqin dorixonalar    | Yo'q  |
+| POST   | /api/pharmacies           | Dorixona qo'shish    | Admin |
+| PUT    | /api/pharmacies/:id       | Tahrirlash           | Admin |
+| DELETE | /api/pharmacies/:id       | O'chirish            | Admin |
+| GET    | /api/medicines            | Barcha dorilar       | Yo'q  |
+| GET    | /api/medicines?search=    | Qidirish             | Yo'q  |
+| POST   | /api/medicines            | Dori qo'shish        | Admin |
+| POST   | /api/orders               | Buyurtma berish      | Token |
+| GET    | /api/orders/my            | Mening buyurtmalarim | Token |
+| GET    | /api/orders               | Barcha buyurtmalar   | Admin |
+| PUT    | /api/orders/:id/status    | Status yangilash     | Admin |
+| GET    | /api/admin/stats          | Statistika           | Admin |
