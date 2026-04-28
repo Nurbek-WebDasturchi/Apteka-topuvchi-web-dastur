@@ -17,7 +17,6 @@ CREATE TABLE users (
   role       VARCHAR(20)         DEFAULT 'user',  -- 'user' yoki 'admin'
   created_at TIMESTAMP           DEFAULT NOW()
 );
-
 -- ── DORIXONALAR ──────────────────────────────────────────────
 CREATE TABLE pharmacies (
   id            SERIAL PRIMARY KEY,
