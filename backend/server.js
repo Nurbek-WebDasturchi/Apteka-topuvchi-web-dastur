@@ -4,9 +4,6 @@
 //  Ishlab chiqish: npx nodemon server.js
 // ════════════════════════════════════════════════════════════
 require("dotenv").config();
-
-console.log("DB_PASSWORD type:", typeof process.env.DB_PASSWORD);
-console.log("DB_PASSWORD value:", process.env.DB_PASSWORD);
 const express = require("express");
 const cors = require("cors");
 
