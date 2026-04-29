@@ -45,7 +45,13 @@ app.listen(PORT, () => {
   console.log("==============================================");
   console.log("  APTEK TOPUVCHI SERVER");
   console.log("==============================================");
-  console.log("  Manzil: http://localhost:" + PORT);
-  console.log("  API:    http://localhost:" + PORT + "/api/...");
+  console.log(
+    "  Manzil: https://apteka-topuvchi-web-dastur.onrender.com:" + PORT,
+  );
+  console.log(
+    "  API:    https://apteka-topuvchi-web-dastur.onrender.com:" +
+      PORT +
+      "/api/...",
+  );
   console.log("==============================================");
 });

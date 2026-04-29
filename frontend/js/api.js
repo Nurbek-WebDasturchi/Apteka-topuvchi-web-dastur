@@ -1,5 +1,5 @@
 // ── API HELPER ─────────────────────────────────────────────────
-const API = "http://localhost:5000/api";
+const API = "https://apteka-topuvchi-web-dastur.onrender.com/api";
 
 function getToken() {
   return localStorage.getItem("token");
