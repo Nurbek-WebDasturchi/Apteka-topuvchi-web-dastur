@@ -41,7 +41,7 @@ function renderNav() {
     el.innerHTML = `
       <span id="userDisplay">👤 ${user.name}</span>
       ${user.role === "admin" ? '<a href="/pages/admin/dashboard.html" class="nav-link">⚙️ Admin</a>' : ""}
-      <a href="../pages/login.html" class="nav-link">Profil</a>
+      <a href="./pages/login.html" class="nav-link">Profil</a>
       <button onclick="logout()" class="nav-link btn-accent" style="border:none;cursor:pointer;">Chiqish</button>
     `;
   } else {
