@@ -78,17 +78,6 @@ cp .env.example .env
 nano .env
 ```
 
-`.env` fayl tarkibi:
-
-```
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=aptek_db
-DB_USER=postgres
-DB_PASSWORD=SIZNING_PAROLINGIZ
-JWT_SECRET=uzun_maxfiy_kalit_bu_yerda
-1=5000
-```
 
 ### 4. Serverni ishga tushirish
 
@@ -109,13 +98,6 @@ python3 -m http.server 3000
 ```
 
 ---
-
-## Sinash
-
-### Admin kirish:
-
-- Email: `admin@aptek.uz`
-- Parol: `password`
 
 ### API so'rovlari:
 
