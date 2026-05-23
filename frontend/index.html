@@ -175,6 +175,47 @@
         cursor: pointer;
         width: 100%;
       }
+      /* AI BUTTON */
+      #aiBtn {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        width: 58px;
+        height: 58px;
+        border: none;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #3fb950, #58a6ff);
+        color: white;
+        font-size: 26px;
+        cursor: pointer;
+        z-index: 9999;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #aiBtn:hover {
+        transform: scale(1.08);
+        box-shadow: 0 10px 28px rgba(63, 185, 80, 0.45);
+      }
+
+      #aiBtn:active {
+        transform: scale(0.96);
+      }
+
+      @media (max-width: 700px) {
+        #aiBtn {
+          right: 16px;
+          bottom: 16px;
+          width: 52px;
+          height: 52px;
+          font-size: 22px;
+        }
+      }
     </style>
   </head>
   <body>
@@ -217,7 +258,8 @@
       </aside>
       <div id="map"></div>
     </div>
-
+    <!-- AI Floating Button -->
+    <button id="aiBtn" title="AI yordamchi">🤖</button>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="js/api.js"></script>
     <script>
@@ -404,6 +446,11 @@
         if (userCoords) fetchPharmacies(userCoords.lat, userCoords.lng);
       });
       renderNav();
+    </script>
+    <script>
+      document.getElementById("aiBtn").addEventListener("click", () => {
+        window.location.href = "./pages/chat.html";
+      });
     </script>
   </body>
 </html>
