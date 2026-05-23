@@ -19,7 +19,7 @@ app.use("/api/pharmacies", require("./routes/pharmacies"));
 app.use("/api/medicines", require("./routes/medicines"));
 app.use("/api/orders", require("./routes/orders"));
 app.use("/api/admin", require("./routes/admin"));
-
+app.use("/api/ai", require("./routes/ai"));
 // ── SALOMLASHUV ───────────────────────────────────────────────
 app.get("/", (req, res) => {
   res.json({
